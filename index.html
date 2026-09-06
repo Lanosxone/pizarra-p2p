@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pizarra P2P · USDT/PEN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #14171C;
+    --panel: #1C2028;
+    --panel-raised: #22262F;
+    --border: #2B303A;
+    --text: #E7E9EC;
+    --muted: #8A93A3;
+    --accent: #D9A441;
+    --accent-dim: #8A7440;
+    --good: #4CAF7D;
+    --bad: #D96B6B;
+    --radius: 6px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+  a { color: var(--accent); }
+
+  .wrap {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px 16px 80px;
+  }
+
+  header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+    margin-bottom: 18px;
+  }
+  header h1 {
+    font-size: 21px;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  header h1 span { color: var(--muted); font-weight: 500; }
+  .meta-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  #refreshBtn {
+    background: var(--panel-raised);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 13px;
+  }
+  #refreshBtn:hover { border-color: var(--accent-dim); }
+  #refreshBtn:disabled { opacity: 0.5; cursor: default; }
+
+  .status-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .pill {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+  }
+  .pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+  .pill.ok { color: var(--text); }
+  .pill.ok .dot { background: var(--good); }
+  .pill.down .dot { background: var(--bad); }
+
+  section { margin-bottom: 28px; }
+  h2 {
+    font-size: 13px;
+    text-transform: none;
+    color: var(--muted);
+    font-weight: 600;
+    margin: 0 0 10px;
+  }
+
+  .amount-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .amount-row input {
+    background: var(--panel-raised);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: var(--radius);
+    padding: 5px 8px;
+    width: 90px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13.5px;
+  }
+  tbody tr.combo-row { cursor: pointer; }
+  tbody tr.combo-row:hover { background: var(--panel-raised); }
+  .num { font-family: 'IBM Plex Mono', monospace; text-align: right; }
+  .spread-pos { color: var(--good); font-weight: 600; }
+  .spread-neg { color: var(--bad); }
+  .ex-tag {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--panel-raised);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .empty-note {
+    color: var(--muted);
+    font-size: 13px;
+    padding: 16px 10px;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+  }
+
+  .panel-scroll { overflow-x: auto; }
+
+  /* Detail panel */
+  #overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 10;
+  }
+  #overlay.show { display: flex; }
+  #detailPanel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 12px 12px 0 0;
+    max-width: 620px;
+    width: 100%;
+    padding: 20px;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  @media (min-width: 700px) {
+    #overlay { align-items: center; }
+    #detailPanel { border-radius: 12px; border-bottom: 1px solid var(--border); }
+  }
+  #detailPanel h3 { margin: 0 0 4px; font-size: 17px; }
+  #detailPanel .sub { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+  .leg {
+    background: var(--panel-raised);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+  .leg .leg-title { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .leg .leg-price { font-size: 20px; font-weight: 600; font-family: 'IBM Plex Mono', monospace; }
+  .leg .leg-detail { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+  .btn-row { display: flex; gap: 8px; margin-top: 8px; }
+  .btn {
+    display: inline-block;
+    text-align: center;
+    padding: 8px 12px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    color: var(--text);
+    background: var(--panel);
+    cursor: pointer;
+  }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #201804; font-weight: 600; }
+  #closePanel {
+    float: right;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 20px;
+    cursor: pointer;
+    line-height: 1;
+  }
+  #copyNote { font-size: 12px; color: var(--good); margin-left: 8px; display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Pizarra P2P <span>· USDT/PEN</span></h1>
+    <div class="meta-row">
+      <span id="updatedAt">—</span>
+      <button id="refreshBtn">Actualizar</button>
+    </div>
+  </header>
+
+  <div class="status-row" id="statusRow"></div>
+
+  <section>
+    <h2>Mejores combinaciones</h2>
+    <div class="amount-row">
+      Monto a operar
+      <input type="number" id="montoInput" value="300" min="10" step="10" />
+      soles
+    </div>
+    <div class="panel-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Comprar en</th>
+            <th class="num">Precio</th>
+            <th>Vender en</th>
+            <th class="num">Precio</th>
+            <th class="num">Spread neto</th>
+            <th class="num">Ganancia est.</th>
+          </tr>
+        </thead>
+        <tbody id="comboBody"></tbody>
+      </table>
+    </div>
+    <div id="comboEmpty" class="empty-note" style="display:none;">
+      Aún no hay suficientes anuncios reales con Yape/Plin para armar combinaciones.
+    </div>
+  </section>
+
+  <section>
+    <h2>Anuncios por exchange</h2>
+    <div id="rawTables"></div>
+  </section>
+
+</div>
+
+<div id="overlay">
+  <div id="detailPanel">
+    <button id="closePanel">&times;</button>
+    <h3 id="detailTitle">—</h3>
+    <div class="sub" id="detailSub"></div>
+    <div id="legBuy" class="leg"></div>
+    <div id="legSell" class="leg"></div>
+    <div class="btn-row">
+      <button class="btn" id="copyBtn">Copiar resumen</button>
+      <span id="copyNote">Copiado ✓</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const FN_URL = "/.netlify/functions/p2p-data";
+const NETWORK_FEE_USDT = 1; // costo estimado de mover USDT entre exchanges (TRC20)
+const REFRESH_MS = 45000;
+const EXCHANGE_LABEL = { binance: "Binance", bybit: "Bybit", okx: "OKX" };
+
+let latest = null;
+
+function fmt(n, d = 2) {
+  if (n === null || n === undefined || isNaN(n)) return "—";
+  return Number(n).toLocaleString("es-PE", { minimumFractionDigits: d, maximumFractionDigits: d });
+}
+
+async function load(manual) {
+  const btn = document.getElementById("refreshBtn");
+  btn.disabled = true;
+  btn.textContent = "Actualizando…";
+  try {
+    const res = await fetch(FN_URL, { cache: "no-store" });
+    const json = await res.json();
+    latest = json;
+    render();
+  } catch (err) {
+    document.getElementById("updatedAt").textContent = "Error al conectar con la función — reintentando…";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Actualizar";
+  }
+}
+
+function render() {
+  if (!latest) return;
+  const d = new Date(latest.updated);
+  document.getElementById("updatedAt").textContent = "Última actualización: " + d.toLocaleTimeString("es-PE");
+
+  // Status pills
+  const statusRow = document.getElementById("statusRow");
+  statusRow.innerHTML = "";
+  for (const key of ["binance", "bybit", "okx"]) {
+    const ex = latest.exchanges[key];
+    const pill = document.createElement("div");
+    pill.className = "pill " + (ex.available ? "ok" : "down");
+    pill.innerHTML = `<span class="dot"></span> ${EXCHANGE_LABEL[key]} ${ex.available ? "" : "· no disponible"}`;
+    statusRow.appendChild(pill);
+  }
+
+  renderCombos();
+  renderRawTables();
+}
+
+function renderCombos() {
+  const monto = parseFloat(document.getElementById("montoInput").value) || 300;
+  const exNames = ["binance", "bybit", "okx"];
+  const combos = [];
+
+  for (const buyEx of exNames) {
+    const buyData = latest.exchanges[buyEx];
+    if (!buyData.available || !buyData.buy.length) continue;
+    const bestBuyAd = [...buyData.buy].sort((a, b) => a.price - b.price)[0];
+
+    for (const sellEx of exNames) {
+      const sellData = latest.exchanges[sellEx];
+      if (!sellData.available || !sellData.sell.length) continue;
+      const bestSellAd = [...sellData.sell].sort((a, b) => b.price - a.price)[0];
+
+      const crossExchange = buyEx !== sellEx;
+      const units = monto / bestBuyAd.price;
+      const proceeds = units * bestSellAd.price;
+      const feePen = crossExchange ? NETWORK_FEE_USDT * bestBuyAd.price : 0;
+      const gain = proceeds - monto - feePen;
+      const spreadPct = (gain / monto) * 100;
+
+      combos.push({ buyEx, sellEx, bestBuyAd, bestSellAd, gain, spreadPct, crossExchange });
+    }
+  }
+
+  combos.sort((a, b) => b.spreadPct - a.spreadPct);
+
+  const body = document.getElementById("comboBody");
+  body.innerHTML = "";
+  document.getElementById("comboEmpty").style.display = combos.length ? "none" : "block";
+
+  combos.slice(0, 12).forEach((c, i) => {
+    const tr = document.createElement("tr");
+    tr.className = "combo-row";
+    tr.innerHTML = `
+      <td><span class="ex-tag">${EXCHANGE_LABEL[c.buyEx]}</span></td>
+      <td class="num mono">${fmt(c.bestBuyAd.price)}</td>
+      <td><span class="ex-tag">${EXCHANGE_LABEL[c.sellEx]}</span></td>
+      <td class="num mono">${fmt(c.bestSellAd.price)}</td>
+      <td class="num mono ${c.spreadPct >= 0 ? "spread-pos" : "spread-neg"}">${fmt(c.spreadPct)}%</td>
+      <td class="num mono ${c.gain >= 0 ? "spread-pos" : "spread-neg"}">S/ ${fmt(c.gain)}</td>
+    `;
+    tr.addEventListener("click", () => openDetail(c, monto));
+    body.appendChild(tr);
+  });
+}
+
+function renderRawTables() {
+  const container = document.getElementById("rawTables");
+  container.innerHTML = "";
+  for (const key of ["binance", "bybit", "okx"]) {
+    const ex = latest.exchanges[key];
+    const block = document.createElement("div");
+    block.style.marginBottom = "18px";
+    if (!ex.available) {
+      block.innerHTML = `<h2>${EXCHANGE_LABEL[key]}</h2><div class="empty-note">No disponible ahora mismo (${ex.error || "sin detalle"}). No se muestra ningún dato de relleno.</div>`;
+      container.appendChild(block);
+      continue;
+    }
+    const rows = (list) => list.slice(0, 6).map(o => `
+      <tr>
+        <td class="num mono">${fmt(o.price)}</td>
+        <td class="num mono">${fmt(o.min,0)}–${fmt(o.max,0)}</td>
+        <td>${o.merchant}</td>
+        <td>${o.methods.join(", ")}</td>
+      </tr>
+    `).join("");
+    block.innerHTML = `
+      <h2>${EXCHANGE_LABEL[key]}</h2>
+      <div class="panel-scroll">
+      <table>
+        <thead><tr><th class="num">Precio</th><th class="num">Límites S/</th><th>Comerciante</th><th>Pago</th></tr></thead>
+        <tbody>
+          <tr><td colspan="4" style="color:var(--muted);font-size:12px;padding-top:10px;">Compra (tú compras)</td></tr>
+          ${rows(ex.buy) || '<tr><td colspan="4" class="empty-note">Sin anuncios con Yape/Plin</td></tr>'}
+          <tr><td colspan="4" style="color:var(--muted);font-size:12px;padding-top:10px;">Venta (tú vendes)</td></tr>
+          ${rows(ex.sell) || '<tr><td colspan="4" class="empty-note">Sin anuncios con Yape/Plin</td></tr>'}
+        </tbody>
+      </table>
+      </div>
+    `;
+    container.appendChild(block);
+  }
+}
+
+function openDetail(c, monto) {
+  document.getElementById("detailTitle").textContent =
+    `Comprar en ${EXCHANGE_LABEL[c.buyEx]} → Vender en ${EXCHANGE_LABEL[c.sellEx]}`;
+  document.getElementById("detailSub").textContent = c.crossExchange
+    ? `Cruza exchanges — se descontó ~${NETWORK_FEE_USDT} USDT de comisión de red estimada.`
+    : `Mismo exchange — sin comisión de red.`;
+
+  document.getElementById("legBuy").innerHTML = `
+    <div class="leg-title">1. Comprar USDT en ${EXCHANGE_LABEL[c.buyEx]}</div>
+    <div class="leg-price mono">S/ ${fmt(c.bestBuyAd.price)}</div>
+    <div class="leg-detail">Comerciante: ${c.bestBuyAd.merchant} · Límites S/ ${fmt(c.bestBuyAd.min,0)}–${fmt(c.bestBuyAd.max,0)} · ${c.bestBuyAd.methods.join(", ")}</div>
+    <div class="btn-row"><a class="btn primary" href="${c.bestBuyAd.link}" target="_blank" rel="noopener">Abrir en ${EXCHANGE_LABEL[c.buyEx]}</a></div>
+  `;
+  document.getElementById("legSell").innerHTML = `
+    <div class="leg-title">2. Vender USDT en ${EXCHANGE_LABEL[c.sellEx]}</div>
+    <div class="leg-price mono">S/ ${fmt(c.bestSellAd.price)}</div>
+    <div class="leg-detail">Comerciante: ${c.bestSellAd.merchant} · Límites S/ ${fmt(c.bestSellAd.min,0)}–${fmt(c.bestSellAd.max,0)} · ${c.bestSellAd.methods.join(", ")}</div>
+    <div class="btn-row"><a class="btn primary" href="${c.bestSellAd.link}" target="_blank" rel="noopener">Abrir en ${EXCHANGE_LABEL[c.sellEx]}</a></div>
+  `;
+
+  document.getElementById("copyBtn").onclick = () => {
+    const summary =
+`Pizarra P2P — ${new Date().toLocaleString("es-PE")}
+Monto: S/ ${fmt(monto)}
+1) Comprar USDT en ${EXCHANGE_LABEL[c.buyEx]} a S/ ${fmt(c.bestBuyAd.price)} — ${c.bestBuyAd.merchant} (${c.bestBuyAd.methods.join(", ")})
+2) Vender USDT en ${EXCHANGE_LABEL[c.sellEx]} a S/ ${fmt(c.bestSellAd.price)} — ${c.bestSellAd.merchant} (${c.bestSellAd.methods.join(", ")})
+Ganancia estimada: S/ ${fmt(c.gain)} (${fmt(c.spreadPct)}%)`;
+    navigator.clipboard.writeText(summary).then(() => {
+      const note = document.getElementById("copyNote");
+      note.style.display = "inline";
+      setTimeout(() => note.style.display = "none", 1500);
+    });
+  };
+
+  document.getElementById("overlay").classList.add("show");
+}
+
+document.getElementById("closePanel").addEventListener("click", () => {
+  document.getElementById("overlay").classList.remove("show");
+});
+document.getElementById("overlay").addEventListener("click", (e) => {
+  if (e.target.id === "overlay") e.target.classList.remove("show");
+});
+document.getElementById("refreshBtn").addEventListener("click", () => load(true));
+document.getElementById("montoInput").addEventListener("input", renderCombos);
+
+load();
+setInterval(load, REFRESH_MS);
+</script>
+</body>
+</html>
