@@ -132,7 +132,7 @@ async function fetchBybitSide(side) {
           retCode: json.ret_code ?? json.retCode,
           retMsg: json.ret_msg ?? json.retMsg,
           rawItemCount: list.length,
-          sample: rawText.slice(0, 500),
+          sampleItem: list[0] || null,
         }
       : undefined;
   return { list: parsed, debug };
@@ -158,7 +158,7 @@ async function fetchOkxSide(side) {
   if (!res.ok) {
     throw new Error(`OKX HTTP ${res.status}: ${rawText.slice(0, 300)}`);
   }
-  const rawList = json?.data?.[0]?.sell || json?.data?.[0]?.buy || json?.data || [];
+  const rawList = json?.data?.buy || json?.data?.sell || (Array.isArray(json?.data) ? json.data : []);
   const list = Array.isArray(rawList) ? rawList : [];
   const parsed = list
     .map((item) => {
@@ -180,7 +180,7 @@ async function fetchOkxSide(side) {
           code: json.code,
           msg: json.msg,
           rawItemCount: list.length,
-          sample: rawText.slice(0, 500),
+          sampleItem: list[0] || null,
         }
       : undefined;
   return { list: parsed, debug };
