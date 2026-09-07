@@ -19,6 +19,17 @@ function matchesPayMethod(methods) {
   );
 }
 
+// Descarta anuncios con precio muy alejado de lo normal (basura, trampas,
+// anuncios de prueba). Compara contra la mediana del propio lote: si un
+// precio se aleja más de 25%, se descarta.
+function dropPriceOutliers(items) {
+  if (items.length < 3) return items;
+  const sorted = [...items].map((i) => i.price).sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  const median = sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+  return items.filter((i) => Math.abs(i.price - median) / median <= 0.25);
+}
+
 async function fetchWithTimeout(url, options, ms = 9000) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), ms);
@@ -70,8 +81,8 @@ async function fetchBinanceSide(tradeType) {
         link: `https://p2p.binance.com/trade/all-payments/USDT?fiat=PEN`,
       };
     })
-    .filter((o) => matchesPayMethod(o.methods) && !isNaN(o.price));
-  return { list: parsed, debug: undefined };
+    .filter((o) => !isNaN(o.price));
+  return { list: dropPriceOutliers(parsed), debug: undefined };
 }
 // Bybit no publica un endpoint público documentado para solo lectura
 // (su API oficial v5 exige firma/API key incluso para listar anuncios).
@@ -123,7 +134,7 @@ async function fetchBybitSide(side) {
         link: `https://www.bybit.com/fiat/trade/otc/`,
       };
     })
-    .filter((o) => matchesPayMethod(o.methods) && !isNaN(o.price));
+    .filter((o) => !isNaN(o.price));
   // Diagnóstico temporal: si tras parsear no quedó nada, mandamos
   // una muestra de la respuesta cruda para poder ver por qué.
   const debug =
@@ -135,7 +146,7 @@ async function fetchBybitSide(side) {
           sampleItem: list[0] || null,
         }
       : undefined;
-  return { list: parsed, debug };
+  return { list: dropPriceOutliers(parsed), debug };
 }
 
 // ---------- OKX ----------
@@ -173,7 +184,7 @@ async function fetchOkxSide(side) {
         link: `https://www.okx.com/p2p-markets/${FIAT.toLowerCase()}/usdt`,
       };
     })
-    .filter((o) => matchesPayMethod(o.methods) && !isNaN(o.price));
+    .filter((o) => !isNaN(o.price));
   const debug =
     parsed.length === 0
       ? {
@@ -183,7 +194,7 @@ async function fetchOkxSide(side) {
           sampleItem: list[0] || null,
         }
       : undefined;
-  return { list: parsed, debug };
+  return { list: dropPriceOutliers(parsed), debug };
 }
 
 // ---------- Envoltorio a prueba de fallos ----------
