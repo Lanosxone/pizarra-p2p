@@ -78,7 +78,7 @@ async function fetchBinanceSide(tradeType) {
         exchange: "binance",
         // Binance no expone un link público directo por anuncio individual,
         // así que enlazamos al tablero ya filtrado por activo/moneda.
-        link: `https://p2p.binance.com/trade/all-payments/USDT?fiat=PEN`,
+        link: `https://p2p.binance.com/en/trade/all-payments/USDT?fiat=PEN`,
       };
     })
     .filter((o) => !isNaN(o.price));
@@ -91,6 +91,7 @@ async function fetchBinanceSide(tradeType) {
 // nunca se rellena con datos falsos.
 async function fetchBybitSide(side) {
   // side: "1" = comprar (para ti), "0" = vender (para ti) según su web
+  const linkAction = side === "1" ? "buy" : "sell";
   const res = await fetchWithTimeout(
     "https://api2.bybit.com/fiat/otc/item/online",
     {
@@ -131,7 +132,7 @@ async function fetchBybitSide(side) {
         merchant: item.nickName || "—",
         methods,
         exchange: "bybit",
-        link: `https://www.bybit.com/fiat/trade/otc/`,
+        link: `https://www.bybit.com/en/fiat/trade/otc/${linkAction}/USDT/PEN`,
       };
     })
     .filter((o) => !isNaN(o.price));
@@ -181,7 +182,7 @@ async function fetchOkxSide(side) {
         merchant: item.nickName || item.merchantName || "—",
         methods,
         exchange: "okx",
-        link: `https://www.okx.com/p2p-markets/${FIAT.toLowerCase()}/usdt`,
+        link: `https://www.okx.com/p2p-markets/${FIAT.toLowerCase()}/${side}-usdt`,
       };
     })
     .filter((o) => !isNaN(o.price));
