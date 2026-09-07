@@ -427,9 +427,11 @@ function renderRawTables() {
 function openDetail(c, monto) {
   document.getElementById("detailTitle").textContent =
     `Comprar en ${EXCHANGE_LABEL[c.buyEx]} → Vender en ${EXCHANGE_LABEL[c.sellEx]}`;
-  document.getElementById("detailSub").textContent = c.crossExchange
-    ? `Cruza exchanges — se descontó ~${NETWORK_FEE_USDT} USDT de comisión de red estimada.`
-    : `Mismo exchange — sin comisión de red.`;
+  const feeNote = c.crossExchange
+    ? `Cruza exchanges — se descontó ~${NETWORK_FEE_USDT} USDT de comisión de red estimada. `
+    : `Mismo exchange — sin comisión de red. `;
+  document.getElementById("detailSub").textContent =
+    feeNote + "Los anuncios P2P cambian en minutos: al entrar al exchange puede que este anuncio ya no esté — usa el que sí esté disponible con un precio similar.";
 
   document.getElementById("legBuy").innerHTML = `
     <div class="leg-title">1. Comprar USDT en ${EXCHANGE_LABEL[c.buyEx]}</div>
