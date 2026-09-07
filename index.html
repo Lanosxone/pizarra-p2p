@@ -244,6 +244,9 @@
       <input type="number" id="montoInput" value="300" min="10" step="10" />
       soles
     </div>
+    <div class="amount-row" style="margin-top:-6px;">
+      Se muestran todos los anuncios rentables sin filtrar por método de pago — revisa la columna "Pago" antes de operar.
+    </div>
     <div class="panel-scroll">
       <table>
         <thead>
@@ -260,7 +263,7 @@
       </table>
     </div>
     <div id="comboEmpty" class="empty-note" style="display:none;">
-      Aún no hay suficientes anuncios reales con Yape/Plin para armar combinaciones.
+      Aún no hay suficientes anuncios reales para armar combinaciones. Revisa la columna "Pago" de cada anuncio antes de operar.
     </div>
   </section>
 
@@ -410,9 +413,9 @@ function renderRawTables() {
         <thead><tr><th class="num">Precio</th><th class="num">Límites S/</th><th>Comerciante</th><th>Pago</th></tr></thead>
         <tbody>
           <tr><td colspan="4" style="color:var(--muted);font-size:12px;padding-top:10px;">Compra (tú compras)</td></tr>
-          ${rows(ex.buy) || '<tr><td colspan="4" class="empty-note">Sin anuncios con Yape/Plin</td></tr>'}
+          ${rows(ex.buy) || '<tr><td colspan="4" class="empty-note">Sin anuncios disponibles</td></tr>'}
           <tr><td colspan="4" style="color:var(--muted);font-size:12px;padding-top:10px;">Venta (tú vendes)</td></tr>
-          ${rows(ex.sell) || '<tr><td colspan="4" class="empty-note">Sin anuncios con Yape/Plin</td></tr>'}
+          ${rows(ex.sell) || '<tr><td colspan="4" class="empty-note">Sin anuncios disponibles</td></tr>'}
         </tbody>
       </table>
       </div>
